@@ -2,10 +2,24 @@
 
 Lien du GitHub : https://github.com/derwoak/tp-web-temps-reel
 
-La page de suivi est accessible à l'adresse suivante :
-`http://localhost:3000/index.html?id=1`
+## Lancer le projet
 
-## Routes
+```bash
+docker compose up --build -d
+```
+
+Pour repartir de la base `db.json` du dépôt, il faut effacer le volume :
+
+```bash
+docker compose down -v
+```
+
+Le serveur démarre sur `http://localhost:3000`.
+
+La page de suivi est accessible sur `http://localhost:3000/index.html?id=1`
+où `id` correspond au numéro de la commande.
+
+## Liste des routes de l'API
 
 `POST /orders` : permet de passer une commande avec le body suivant :
 ```json
