@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Response } from "express";
 import cors from "cors";
 import { db, type Order, type Product, type Status } from "./db.js";
 
@@ -8,6 +8,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
+
+const clients = new Set<Response>();
+
+app.get("/stream", (_req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
+  clients.add(res);
+  res.on("close", () => clients.delete(res));
+});
+
+let eventId = 0;
+function broadcast(event: string, data: unknown) {
+  const msg = `id: ${++eventId}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const res of clients) res.write(msg);
+}
 
 app.post("/orders", async (req, res) => {
   const { userId, productId, quantity } = req.body ?? {};
@@ -44,7 +63,22 @@ app.post("/orders", async (req, res) => {
   await db.push("/products", products);
   await db.push("/orders[]", order);
 
+  broadcast("order-created", order);
+  broadcast("stock-changed", product);
+
   res.status(201).json(order);
+});
+
+app.get("/orders/:id", async (req, res) => {
+  const orders = await db.getObject<Order[]>("/orders");
+  const order = orders.find((o) => o.id === Number(req.params.id));
+
+  if (!order) {
+    res.status(404).json({ error: "Commande introuvable" });
+    return;
+  }
+
+  res.json(order);
 });
 
 app.patch("/orders/:id/status", async (req, res) => {
@@ -71,10 +105,13 @@ app.patch("/orders/:id/status", async (req, res) => {
   order.status = next;
   await db.push("/orders", orders);
 
+  broadcast("order-status-changed", order);
+
   if (next === "shipped") {
     setTimeout(async () => {
       order.status = "delivered";
       await db.push("/orders", orders);
+      broadcast("order-status-changed", order);
     }, 20_000);
   }
 
@@ -103,6 +140,9 @@ app.post("/orders/:id/cancel", async (req, res) => {
 
   await db.push("/products", products);
   await db.push("/orders", orders);
+
+  broadcast("order-cancelled", order);
+  broadcast("stock-changed", product);
 
   res.json(order);
 });

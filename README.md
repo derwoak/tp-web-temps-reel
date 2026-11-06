@@ -21,3 +21,4 @@ Lien du GitHub : https://github.com/derwoak/tp-web-temps-reel
 `POST /orders/:id/cencel` : permet d'annuler une commande en préparation
 
 ---
+`GET /orders/:id` : permet de récupérer une commande
