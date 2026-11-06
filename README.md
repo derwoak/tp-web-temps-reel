@@ -12,3 +12,9 @@ Lien du GitHub : https://github.com/derwoak/tp-web-temps-reel
   "quantity": 12
 }
 ```
+---
+`PATCH /orders/:id/status` : permet de passer au status de commande d'après, en suivant cet ordre :
+
+`preparing -> shipped -> delivered`
+
+---

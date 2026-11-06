@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { db, type Order, type Product } from "./db.js";
+import { db, type Order, type Product, type Status } from "./db.js";
 
 const PORT = 3000;
 
@@ -45,6 +45,33 @@ app.post("/orders", async (req, res) => {
   await db.push("/orders[]", order);
 
   res.status(201).json(order);
+});
+
+app.patch("/orders/:id/status", async (req, res) => {
+  const orders = await db.getObject<Order[]>("/orders");
+  const order = orders.find((o) => o.id === Number(req.params.id));
+
+  if (!order) {
+    res.status(404).json({ error: "Commande introuvable" });
+    return;
+  }
+
+  let next: Status | undefined;
+  if (order.status === "preparing") {
+    next = "shipped";
+  } else if (order.status === "shipped") {
+    next = "delivered";
+  }
+
+  if (!next) {
+    res.status(400).json({ error: `Une commande « ${order.status} » ne peut plus changer de statut` });
+    return;
+  }
+
+  order.status = next;
+  await db.push("/orders", orders);
+
+  res.json(order);
 });
 
 app.listen(PORT, "0.0.0.0", () => {
