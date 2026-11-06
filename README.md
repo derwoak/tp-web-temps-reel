@@ -18,3 +18,6 @@ Lien du GitHub : https://github.com/derwoak/tp-web-temps-reel
 `preparing -> shipped -> delivered`
 
 ---
+`POST /orders/:id/cencel` : permet d'annuler une commande en préparation
+
+---

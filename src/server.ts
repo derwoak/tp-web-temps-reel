@@ -74,6 +74,32 @@ app.patch("/orders/:id/status", async (req, res) => {
   res.json(order);
 });
 
+app.post("/orders/:id/cancel", async (req, res) => {
+  const orders = await db.getObject<Order[]>("/orders");
+  const order = orders.find((o) => o.id === Number(req.params.id));
+
+  if (!order) {
+    res.status(404).json({ error: "Commande introuvable" });
+    return;
+  }
+
+  if (order.status !== "preparing") {
+    res.status(400).json({ error: "La commande ne peut plus être annulée" });
+    return;
+  }
+
+  const products = await db.getObject<Product[]>("/products");
+  const product = products.find((p) => p.id === order.productId)!;
+
+  product.stock += order.quantity;
+  order.status = "cancelled";
+
+  await db.push("/products", products);
+  await db.push("/orders", orders);
+
+  res.json(order);
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });
