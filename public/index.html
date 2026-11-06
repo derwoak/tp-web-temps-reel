@@ -6,6 +6,28 @@
     <title>TP 1 - Web Temps Réel</title>
 </head>
 <body>
+    <h1>Suivi de la commande n° <span id="order-id"></span></h1>
+    <p>Statut : <strong id="status"></strong></p>
 
+    <script type="module">
+        const id = Number(new URLSearchParams(location.search).get("id"));
+        const status = document.getElementById("status");
+        document.getElementById("order-id").textContent = id;
+
+        const render = (order) => (status.textContent = order.status);
+
+        const res = await fetch(`/orders/${id}`);
+        if (res.ok) render(await res.json());
+        else status.textContent = "Commande introuvable";
+
+        const source = new EventSource("/stream");
+
+        for (const event of ["order-status-changed", "order-cancelled"]) {
+            source.addEventListener(event, (e) => {
+                const order = JSON.parse(e.data);
+                if (order.id === id) render(order);
+            });
+        }
+    </script>
 </body>
 </html>

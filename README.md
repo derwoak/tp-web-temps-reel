@@ -2,6 +2,9 @@
 
 Lien du GitHub : https://github.com/derwoak/tp-web-temps-reel
 
+La page de suivi est accessible à l'adresse suivante :
+`http://localhost:3000/index.html?id=1`
+
 ## Routes
 
 `POST /orders` : permet de passer une commande avec le body suivant :
